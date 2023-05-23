@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: postgres-operator
+  name: pgbouncer-users
+data:
+  users.txt: |
+    "hippo": ":k->+_nIl4fEqX=_.WUVgyBt"

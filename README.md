@@ -17,16 +17,40 @@ You can find out more information about [PGO](https://github.com/CrunchyData/pos
 [https://github.com/CrunchyData/postgres-operator](https://github.com/CrunchyData/postgres-operator)
 
 ---
+## Instalation
+### Step 1: Download the Examples
+```
+git clone
+
+cd postgres-operator-examples
+```
+### Step 2: Install PGO, the Postgres Operator
+```
+kubectl apply -k kustomize/install/namespace
+kubectl apply --server-side -k kustomize/install/default
+```
+### Step 3: Create a Postgres Cluster
+```
+kubectl apply -k kustomize\high-availability
+```
+### Step 4: Install PGO Monitoring
+```
+kubectl apply -k kustomize/monitoring
+```
+---
 ## Initation PGO K3S Lab
 - [x] hippo cluster
 - [x] hippo ha
+- [x] pgAdmin
 - [x] pgo monitoring
 - [x] pgadmin hippo cluster
 - [x] pgadmin hippo-ha cluster
 - [x] keycloak hippo cluster
 - [ ] keycloak hippo-ha cluster (bouncer)
 - [x] backup manual and scheduler minIO
-- [ ] multiple backup
+- [x] patroni hippo-ha cluster
+- [ ] tunning
+- [x] multiple backup
+- [x] test user from pgBouncer
 - [ ] restore configuration
- 
-
+- [ ] test chaos

@@ -8,6 +8,11 @@ spec:
   instances:
     - name: pgha1
       replicas: 2
+      minAvailable: 1
+      resources:
+        limits:
+          cpu: 2.0
+          memory: 4Gi
       dataVolumeClaimSpec:
         accessModes:
         - "ReadWriteOnce"
@@ -37,7 +42,19 @@ spec:
         - "ReadWriteOnce"
         resources:
           requests:
-            storage: 1Gi 
+            storage: 1Gi
+  patroni:
+    dynamicConfiguration:
+      synchronous_mode: true
+      synchronous_mode_strict: true
+      postgresql:
+        parameters:
+          max_connections: 20
+          max_parallel_workers: 16
+          max_worker_processes: 16
+          shared_buffers: 512MB
+          work_mem: 16MB
+          synchronous_commit: "on"
   backups:
     pgbackrest:
       image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4
@@ -46,23 +63,19 @@ spec:
           name: pgo-s3-creds
       global:
         repo1-path:  /pgbackrest/postgres-operator/hippo-s3/repo1
-        repo1-s3-uri-style: path 
-      # manual:
-      #   repoName: repo1
-      #   options:
-      #    - --type=full
+        repo1-s3-uri-style: path
+        repo1-retention-full: "14"
+        repo1-retention-full-type: time
+      manual:
+        repoName: repo2
+        options:
+         - --type=full
+           --compress-type=bz2
       # --- command ---
       # kubectl --kubeconfig k3s_lab.yaml annotate -n postgres-operator postgrescluster hippo-ha --overwrite   postgres-operator.crunchydata.com/pgbackrest-backup="$( date '+%F_%H:%M:%S' )"
       # --- command ---
       repos:
       - name: repo1
-        # volume:
-        #   volumeClaimSpec:
-        #     accessModes:
-        #     - "ReadWriteOnce"
-        #     resources:
-        #       requests:
-        #         storage: 1Gi
         schedules:
           full: "0 1 * * 0"
           differential: "0 1 * * 1-6"
@@ -70,10 +83,53 @@ spec:
           bucket: "ut-lab-test"
           endpoint: "minio-s3.ut.ac.id:9000"
           region: "main"
+      - name: repo2
+        volume:
+          volumeClaimSpec:
+            accessModes:
+            - "ReadWriteOnce"
+            resources:
+              requests:
+                storage: 1Gi
   proxy:
     pgBouncer:
       image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbouncer:ubi8-1.18-0
       replicas: 2
+      minAvailable: 1
+      config:
+        global:
+          # pool_mode: session
+          # server_reset_query: DISCARD ALL
+          # server_check_delay: "60"
+          # auth_type: md5
+          # auth_file: /etc/pgbouncer/users.txt
+          # tcp_keepalive: "1"
+          # tcp_keepcnt: "10"
+          # tcp_keepidle: "12"
+          # tcp_keepintvl: "2"
+          ignore_startup_parameters: extra_float_digits,search_path
+          # log_connections: "0"
+          # log_disconnections: "0"
+          # log_pooler_errors: "1"
+          # verbose: "1"
+          # server_connect_timeout: "10"
+          # listen_port: "5432"
+          # listen_addr: 0.0.0.0
+          # admin_users: "hippo"
+          # stats_users: "hippo"
+          # min_pool_size: "25"
+          # max_client_conn: "41"
+        # databases:
+        #   'hippo': pool_size=100 reserve_pool=0 pool_mode=session port=5432 user=hippo host=hippo-ha-primary.postgres-operator.svc
+        # files:
+        #     - configMap:
+        #         name: pgbouncer-users
+        #         items:
+        #           - key: users.txt
+        #             path: users.txt
+      port: 5432
+      service:
+        type: LoadBalancer
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
