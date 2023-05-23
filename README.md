@@ -14,4 +14,19 @@ You can find the full [PGO documentation](https://access.crunchydata.com/documen
 
 You can find out more information about [PGO](https://github.com/CrunchyData/postgres-operator), the [Postgres Operator](https://github.com/CrunchyData/postgres-operator) from [Crunchy Data](https://www.crunchydata.com) at the project page:
 
-[https://github.com/CrunchyData/postgres-operator](https://github.com/CrunchyData/postgres-operator).
+[https://github.com/CrunchyData/postgres-operator](https://github.com/CrunchyData/postgres-operator)
+
+---
+## Initation PGO K3S Lab
+- [x] hippo cluster
+- [x] hippo ha
+- [x] pgo monitoring
+- [x] pgadmin hippo cluster
+- [x] pgadmin hippo-ha cluster
+- [x] keycloak hippo cluster
+- [ ] keycloak hippo-ha cluster (bouncer)
+- [x] backup manual and scheduler minIO
+- [ ] multiple backup
+- [ ] restore configuration
+ 
+

@@ -3,8 +3,8 @@ kind: PostgresCluster
 metadata:
   name: hippo-ha
 spec:
-  image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-15.2-0
-  postgresVersion: 15
+  image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-14.7-0
+  postgresVersion: 14
   instances:
     - name: pgha1
       replicas: 2
@@ -24,18 +24,52 @@ spec:
                 matchLabels:
                   postgres-operator.crunchydata.com/cluster: hippo-ha
                   postgres-operator.crunchydata.com/instance-set: pgha1
+  users:
+    - name: hippo
+      databases: 
+        - hippo
+      options: "SUPERUSER CREATEDB CREATEROLE"
+  userInterface:
+    pgAdmin:
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgadmin4:ubi8-4.30-2
+      dataVolumeClaimSpec:
+        accessModes:
+        - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 1Gi 
   backups:
     pgbackrest:
       image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.41-4
+      configuration:
+      - secret:
+          name: pgo-s3-creds
+      global:
+        repo1-path:  /pgbackrest/postgres-operator/hippo-s3/repo1
+        repo1-s3-uri-style: path 
+      # manual:
+      #   repoName: repo1
+      #   options:
+      #    - --type=full
+      # --- command ---
+      # kubectl --kubeconfig k3s_lab.yaml annotate -n postgres-operator postgrescluster hippo-ha --overwrite   postgres-operator.crunchydata.com/pgbackrest-backup="$( date '+%F_%H:%M:%S' )"
+      # --- command ---
       repos:
       - name: repo1
-        volume:
-          volumeClaimSpec:
-            accessModes:
-            - "ReadWriteOnce"
-            resources:
-              requests:
-                storage: 1Gi
+        # volume:
+        #   volumeClaimSpec:
+        #     accessModes:
+        #     - "ReadWriteOnce"
+        #     resources:
+        #       requests:
+        #         storage: 1Gi
+        schedules:
+          full: "0 1 * * 0"
+          differential: "0 1 * * 1-6"
+        s3:
+          bucket: "ut-lab-test"
+          endpoint: "minio-s3.ut.ac.id:9000"
+          region: "main"
   proxy:
     pgBouncer:
       image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbouncer:ubi8-1.18-0
@@ -50,3 +84,7 @@ spec:
                 matchLabels:
                   postgres-operator.crunchydata.com/cluster: hippo-ha
                   postgres-operator.crunchydata.com/role: pgbouncer
+  monitoring:
+   pgmonitor:
+     exporter:
+       image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres-exporter:ubi8-5.3.1-0 
